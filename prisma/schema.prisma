@@ -1,0 +1,47 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Gift {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  price       Float?
+  imageUrl    String?
+  category    String
+  productUrl  String?
+  priority    String      @default("NORMAL") 
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  reservation Reservation?
+}
+
+model Reservation {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  giftId    String   @unique @db.ObjectId
+  gift      Gift     @relation(fields: [giftId], references: [id])
+  firstName String
+  isAnonymous Boolean  @default(false) 
+  lastName  String
+  message   String? 
+  token     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model AdminSettings {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  passwordHash String
+}
+
+enum Priority {
+  MUST_HAVE 
+  REALLY_WANT 
+  NORMAL     
+  NICE_TO_HAVE 
+}
