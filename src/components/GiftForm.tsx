@@ -26,8 +26,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
     category: '',
     productUrl: '',
     imageUrl: '',
-    priority: 'NORMAL',
-    ...initialData
+    priority: 'NORMAL'
   });
 
   useEffect(() => {
@@ -36,8 +35,16 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
 
   useEffect(() => {
     if (initialData) {
+      setFormData({
+        title: initialData.title,
+        description: initialData.description,
+        price: initialData.price,
+        category: initialData.category,
+        productUrl: initialData.productUrl,
+        imageUrl: initialData.imageUrl,
+        priority: initialData.priority 
+      });
       setImagePreview(initialData.imageUrl || null);
-      setFormData(initialData);
     }
   }, [initialData]);
 

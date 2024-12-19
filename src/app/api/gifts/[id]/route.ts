@@ -23,6 +23,7 @@ export async function PUT(
         title: data.title,
         description: data.description,
         price: data.price,
+        priority: data.priority,
         category: data.category,
         productUrl: data.productUrl || null,
         imageUrl: data.imageUrl || null,

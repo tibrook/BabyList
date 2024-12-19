@@ -33,7 +33,8 @@ export const GiftCard = ({ gift, onReserve }: GiftCardProps) => {
   const queryClient = useQueryClient();
   
   const priorityOption = PRIORITY_OPTIONS.find(p => p.id === gift.priority);
-
+  console.log('priorityOption:', priorityOption);
+  console.log('gift.priority:', gift.priority);
   const cancelMutation = useMutation({
     mutationFn: async (giftId: string) => {
       const response = await fetch(`/api/reservations?giftId=${giftId}`, {
@@ -94,25 +95,6 @@ export const GiftCard = ({ gift, onReserve }: GiftCardProps) => {
       throw error;
     }
   };
-
-  // const reserveMutation = useMutation({
-  //   mutationFn: async ({ giftId, data }: { giftId: string; data: ReservationData }) => {
-  //     const response = await fetch('/api/reservations', {
-  //       method: 'POST',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       body: JSON.stringify({ ...data, giftId })
-  //     });
-  //     if (!response.ok) {
-  //       const error = await response.json();
-  //       throw new Error(error.error || 'Failed to reserve gift');
-  //     }
-  //     return response.json();
-  //   },
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries({ queryKey: ['gifts'] });
-  //   }
-  // });
-
   useEffect(() => {
     const checkUserReservation = () => {
       const savedReservations = localStorage.getItem('giftReservations');
@@ -170,13 +152,22 @@ export const GiftCard = ({ gift, onReserve }: GiftCardProps) => {
           <div className="relative w-full h-full bg-white rounded-xl shadow-sm hover:shadow-md transition-duration-300 border border-blue-100 overflow-hidden">
             {/* Zone de l'image (70% de la hauteur) */}
             <div className="relative w-full h-[70%] rounded-t-xl overflow-hidden">
-              {priorityOption && (
-                <div className="absolute top-3 left-3 z-10">
-                  <span className={`${priorityOption.color} text-xs px-3 py-1 rounded-full shadow-sm`}>
-                    {priorityOption.label}
-                  </span>
-                </div>
-              )}
+            {priorityOption && (
+              <div className="absolute top-3 left-3 z-10">
+                <span 
+                  className={`
+                    text-xs font-medium px-2.5 py-1 rounded-md 
+                    drop-shadow-lg backdrop-blur-sm
+                    ${priorityOption.id === 'MUST_HAVE' ? 'bg-rose-600 text-white' :
+                      priorityOption.id === 'REALLY_WANT' ? 'bg-violet-600 text-white' :
+                      priorityOption.id === 'NORMAL' ? 'bg-blue-600 text-white' :
+                      'bg-emerald-600 text-white'}
+                  `}
+                >
+                  {priorityOption.label}
+                </span>
+              </div>
+            )}
               
               {gift.imageUrl ? (
                 <Image 
@@ -226,7 +217,10 @@ export const GiftCard = ({ gift, onReserve }: GiftCardProps) => {
             <h3 className="font-medium text-xl text-gray-800 mb-4">{gift.title}</h3>
             
             {priorityOption && (
-              <span className={`${priorityOption.color} text-xs px-3 py-1 rounded-full inline-flex self-start mb-4`}>
+              <span className={` ${priorityOption.id === 'MUST_HAVE' ? 'bg-rose-600 text-white' :
+          priorityOption.id === 'REALLY_WANT' ? 'bg-violet-600 text-white' :
+          priorityOption.id === 'NORMAL' ? 'bg-blue-600 text-white' :
+          'bg-emerald-600 text-white'} text-xs font-medium px-2.5 py-1 rounded-md inline-flex self-start mb-4`}>
                 {priorityOption.label}
               </span>
             )}

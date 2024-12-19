@@ -12,8 +12,24 @@ export const DEFAULT_CATEGORIES = [
   ];
   
   export const PRIORITY_OPTIONS = [
-    { id: 'MUST_HAVE', label: 'Indispensable', color: 'bg-rose-100 text-rose-800' },
-    { id: 'REALLY_WANT', label: 'Vraiment souhaité', color: 'bg-orange-100 text-orange-800' },
-    { id: 'NORMAL', label: 'Normal', color: 'bg-blue-100 text-blue-800' },
-    { id: 'NICE_TO_HAVE', label: 'Ce serait sympa', color: 'bg-gray-100 text-gray-800' }
+    { 
+      id: 'MUST_HAVE', 
+      label: 'Indispensable', 
+      color: 'bg-rose-600 text-white ring-1 ring-rose-500 shadow-md' 
+    },
+    { 
+      id: 'REALLY_WANT', 
+      label: 'Vraiment souhaité', 
+      color: 'bg-violet-600 text-white ring-1 ring-violet-500 shadow-md' // Changé pour violet
+    },
+    { 
+      id: 'NORMAL', 
+      label: 'Normal', 
+      color: 'bg-blue-600 text-white ring-1 ring-blue-500 shadow-md' 
+    },
+    { 
+      id: 'NICE_TO_HAVE', 
+      label: 'Ce serait sympa', 
+      color: 'bg-blue-600 text-white ring-1 ring-blue-500 shadow-md' // Changé pour emerald
+    }
   ];

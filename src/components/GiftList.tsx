@@ -144,7 +144,7 @@ export const GiftList = ({ selectedPriority, onPriorityChange }: GiftListProps) 
     [...new Set(gifts.map((gift: Gift) => gift.category))].sort() as string[]
   ), [gifts]);
 
-  const filteredGifts = React.useMemo(() => {
+  const sortGifts = (gifts: Gift[], selectedPriority: string, filters: Filters) => {
     let filtered = gifts.filter((gift: Gift) => {
       const matchesSearch = !filters.search || 
         gift.title.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -154,17 +154,39 @@ export const GiftList = ({ selectedPriority, onPriorityChange }: GiftListProps) 
       const matchesAvailability = !filters.showAvailable || !gift.reservation;
       return matchesSearch && matchesCategory && matchesPriority && matchesAvailability;
     });
-
+  
+    // Tri par défaut : d'abord par statut de réservation, puis par priorité
+    filtered = [...filtered].sort((a: Gift, b: Gift) => {
+      // Réservés en bas
+      if (a.reservation && !b.reservation) return 1;
+      if (!a.reservation && b.reservation) return -1;
+      
+      // Tri par priorité (on considère que les priorités sont des nombres, plus petit = plus important)
+      const priorityA = parseInt(a.priority) || 999;
+      const priorityB = parseInt(b.priority) || 999;
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      
+      return 0;
+    });
+  
+    // Tri supplémentaire par prix si demandé
     if (filters.sort) {
-      filtered = [...filtered].sort((a: Gift, b: Gift) => {
-        if (!a.price || !b.price) return 0;
-        return filters.sort === 'price-asc' ? a.price - b.price : b.price - a.price;
+      filtered = filtered.sort((a: Gift, b: Gift) => {
+        const priceA = a.price ?? 0;
+        const priceB = b.price ?? 0;
+        return filters.sort === 'price-asc' ? priceA - priceB : priceB - priceA;
       });
     }
-
+  
     return filtered;
-  }, [gifts, filters, selectedPriority]);
-
+  };
+  
+  // Dans le GiftList component
+  const filteredGifts = React.useMemo(() => {
+    return sortGifts(gifts, selectedPriority, filters);
+  }, [gifts, selectedPriority, filters]);
   // Effects
   useEffect(() => {
     setMounted(true);
