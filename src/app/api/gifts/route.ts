@@ -43,8 +43,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(gift)
   } catch (error) {
     console.error('Detailed error:', error)
+    
+    // Vérification du type d'erreur et extraction sécurisée du message
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    
     return NextResponse.json(
-      { error: 'Database error', details: error.message }, 
+      { error: 'Database error', details: errorMessage },
       { status: 500 }
     )
   } finally {

@@ -113,7 +113,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200">
               <span className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-sm font-medium text-gray-700">
-                Modifier l'image
+                Modifier l&apos;image
               </span>
             </div>
           </div>
@@ -123,7 +123,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             <span className="text-sm font-medium">Ajouter une photo</span>
-            <span className="text-xs text-gray-400 mt-2">JPG ou PNG jusqu'à 5 MB</span>
+            <span className="text-xs text-gray-400 mt-2">JPG ou PNG jusqu&apos;à 5 MB</span>
           </div>
         )}
         <input

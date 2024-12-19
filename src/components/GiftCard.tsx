@@ -6,10 +6,11 @@ import { motion } from 'framer-motion';
 import { PRIORITY_OPTIONS } from '@/lib/constants';
 import { ReservationModal } from '@/components/ReservationModal';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import Image from 'next/image';
 
 interface GiftCardProps {
   gift: Gift;
-  onReserve: (giftId: string, data: ReservationData) => Promise<void>;
+  onReserve: (giftId: string, data: Omit<ReservationData, 'giftId'>) => Promise<void>;
 }
 
 interface ReservationData {
@@ -74,8 +75,9 @@ export const GiftCard = ({ gift, onReserve }: GiftCardProps) => {
 
   const handleReservation = async (data: ReservationData) => {
     try {
-      await reserveMutation.mutateAsync({ giftId: gift.id, data });
-      
+      // await reserveMutation.mutateAsync({ giftId: gift.id, data });
+      await onReserve(gift.id, data);
+
       const savedReservations = localStorage.getItem('giftReservations') || '[]';
       const reservations = JSON.parse(savedReservations);
       reservations.push({
@@ -87,30 +89,29 @@ export const GiftCard = ({ gift, onReserve }: GiftCardProps) => {
       localStorage.setItem('giftReservations', JSON.stringify(reservations));
       
       setUserCanCancel(true);
-      return true;
     } catch (error) {
       console.error('Reservation error:', error);
       throw error;
     }
   };
 
-  const reserveMutation = useMutation({
-    mutationFn: async ({ giftId, data }: { giftId: string; data: ReservationData }) => {
-      const response = await fetch('/api/reservations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, giftId })
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to reserve gift');
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gifts'] });
-    }
-  });
+  // const reserveMutation = useMutation({
+  //   mutationFn: async ({ giftId, data }: { giftId: string; data: ReservationData }) => {
+  //     const response = await fetch('/api/reservations', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ ...data, giftId })
+  //     });
+  //     if (!response.ok) {
+  //       const error = await response.json();
+  //       throw new Error(error.error || 'Failed to reserve gift');
+  //     }
+  //     return response.json();
+  //   },
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ['gifts'] });
+  //   }
+  // });
 
   useEffect(() => {
     const checkUserReservation = () => {
@@ -141,7 +142,7 @@ export const GiftCard = ({ gift, onReserve }: GiftCardProps) => {
       const savedReservations = localStorage.getItem('giftReservations');
       if (savedReservations) {
         const reservations = JSON.parse(savedReservations);
-        const updatedReservations = reservations.filter(r => r.giftId !== gift.id);
+        const updatedReservations = reservations.filter((r: SavedReservation) => r.giftId !== gift.id);
         localStorage.setItem('giftReservations', JSON.stringify(updatedReservations));
       }
       
@@ -178,10 +179,12 @@ export const GiftCard = ({ gift, onReserve }: GiftCardProps) => {
               )}
               
               {gift.imageUrl ? (
-                <img 
-                  src={gift.imageUrl} 
+                <Image 
+                  src={gift.imageUrl}
                   alt={gift.title}
-                  className="w-full h-full object-cover rounded-t-xl"
+                  fill
+                  className="object-cover rounded-t-xl"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-blue-50 to-sky-50 flex items-center justify-center rounded-t-xl">

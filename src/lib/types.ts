@@ -15,6 +15,7 @@ export type Reservation = {
   firstName: string
   lastName: string
   token: string
+  isAnonymous: boolean
 }
 
 export interface ReservationData {

@@ -43,7 +43,7 @@ export const ReservationModal = ({ gift, onClose, onReserve }: ReservationModalP
     try {
       await onReserve(formData);
       setSuccess(true);
-    } catch (err) {
+    } catch {
       setError('Une erreur est survenue lors de la réservation');
     } finally {
       setLoading(false);
@@ -81,7 +81,7 @@ export const ReservationModal = ({ gift, onClose, onReserve }: ReservationModalP
               Réservation confirmée !
             </h3>
             <p className="text-gray-600">
-              Merci d'avoir réservé ce cadeau pour notre petit matelot.
+              Merci d&apos;avoir réservé ce cadeau pour notre petit matelot.
             </p>
           </motion.div>
         ) : (

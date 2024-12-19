@@ -1,7 +1,6 @@
 'use client'
 
 import { GiftList } from '@/components/GiftList';
-import { PRIORITY_OPTIONS } from '@/lib/constants';
 import { motion } from 'framer-motion';
 import React, { useState } from 'react';
 
@@ -94,7 +93,7 @@ export default function Home() {
             animate="visible"
             variants={textVariants}
           >
-            Nous sommes ravis de partager avec vous l'arrivée de notre petit mousse.{' '}
+            Nous sommes ravis de partager avec vous l&apos;arrivée de notre petit mousse.{' '}
             <br className="hidden sm:inline" />
             Voici quelques suggestions pour préparer son embarquement.
           </motion.p>

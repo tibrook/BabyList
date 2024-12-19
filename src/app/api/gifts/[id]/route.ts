@@ -3,14 +3,13 @@ import { prisma } from '@/lib/prisma'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await prisma.$connect()
     const data = await request.json()
-    const { id } = params
+    const id = (await params).id
 
-    // Validation uniquement du titre et de la catégorie
     if (!data.title || !data.category) {
       return NextResponse.json(
         { error: 'Le titre et la catégorie sont requis' },
@@ -25,7 +24,7 @@ export async function PUT(
         description: data.description,
         price: data.price,
         category: data.category,
-        productUrl: data.productUrl || null, // URL optionnelle
+        productUrl: data.productUrl || null,
         imageUrl: data.imageUrl || null,
       }
     })
@@ -44,15 +43,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await prisma.$connect()
-    const { id } = params
+    const id = (await params).id
 
-    console.log('Deleting gift with id:', id)
-
-    // Vérifier si le cadeau existe
     const gift = await prisma.gift.findUnique({
       where: { id },
       include: { reservation: true }
@@ -65,14 +61,12 @@ export async function DELETE(
       )
     }
 
-    // Si le cadeau a une réservation, la supprimer d'abord
     if (gift.reservation) {
       await prisma.reservation.delete({
         where: { id: gift.reservation.id }
       })
     }
 
-    // Supprimer le cadeau
     await prisma.gift.delete({
       where: { id }
     })

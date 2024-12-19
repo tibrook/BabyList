@@ -141,11 +141,11 @@ export const GiftList = ({ selectedPriority, onPriorityChange }: GiftListProps) 
     }
   });
   const categories = React.useMemo(() => (
-    [...new Set(gifts.map(gift => gift.category))].sort()
+    [...new Set(gifts.map((gift: Gift) => gift.category))].sort() as string[]
   ), [gifts]);
 
   const filteredGifts = React.useMemo(() => {
-    let filtered = gifts.filter(gift => {
+    let filtered = gifts.filter((gift: Gift) => {
       const matchesSearch = !filters.search || 
         gift.title.toLowerCase().includes(filters.search.toLowerCase()) ||
         gift.description?.toLowerCase().includes(filters.search.toLowerCase());
@@ -156,7 +156,7 @@ export const GiftList = ({ selectedPriority, onPriorityChange }: GiftListProps) 
     });
 
     if (filters.sort) {
-      filtered = [...filtered].sort((a, b) => {
+      filtered = [...filtered].sort((a: Gift, b: Gift) => {
         if (!a.price || !b.price) return 0;
         return filters.sort === 'price-asc' ? a.price - b.price : b.price - a.price;
       });
@@ -171,10 +171,10 @@ export const GiftList = ({ selectedPriority, onPriorityChange }: GiftListProps) 
   }, []);
 
   // Handlers
-  const handleReserve = async (giftId: string, data: ReservationData) => {
+  const handleReserve = async (giftId: string, data: Omit<ReservationData, 'giftId'>) => {
     try {
       await reserveMutation.mutateAsync({ ...data, giftId });
-      return true;
+      return;
     } catch (error) {
       throw error;
     }
@@ -259,7 +259,7 @@ export const GiftList = ({ selectedPriority, onPriorityChange }: GiftListProps) 
                       className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-300 bg-gray-50 appearance-none pr-10"
                     >
                       <option value="">Toutes les catégories</option>
-                      {categories.map(category => (
+                      {categories.map((category: string) => (
                         <option key={category} value={category}>
                           {category}
                         </option>
@@ -364,7 +364,7 @@ export const GiftList = ({ selectedPriority, onPriorityChange }: GiftListProps) 
           className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
           variants={variants.container}
         >
-          {filteredGifts.map(gift => (
+          {filteredGifts.map((gift: Gift) => (
             <motion.div 
               key={gift.id} 
               variants={variants.item}
