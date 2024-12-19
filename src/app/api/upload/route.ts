@@ -20,19 +20,17 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const result = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'liste-naissance',
-        },
+    const uploadPromise = new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { resource_type: 'auto' },
         (error, result) => {
           if (error) reject(error);
-          resolve(result);
+          else resolve(result);
         }
-      );
-
-      uploadStream.end(buffer);
+      ).end(buffer);
     });
+
+    const result = await uploadPromise;
 
     return NextResponse.json(result);
   } catch (error) {
