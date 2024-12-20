@@ -49,7 +49,10 @@ export const GiftCardImage = ({ gift, priorityOption }: GiftCardImageProps) => {
           <span className={`
             px-3 py-1.5 rounded-xl text-sm font-medium 
             shadow-lg backdrop-blur-sm transition-colors
-            ${priorityOption.color}
+             ${priorityOption.id === 'MUST_HAVE' ? 'bg-rose-600 text-white' :
+                      priorityOption.id === 'REALLY_WANT' ? 'bg-violet-600 text-white' :
+                      priorityOption.id === 'NORMAL' ? 'bg-blue-600 text-white' :
+                      'bg-emerald-600 text-white'}
           `}>
             {priorityOption.label}
           </span>
