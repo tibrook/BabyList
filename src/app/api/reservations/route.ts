@@ -27,7 +27,6 @@ export async function DELETE(request: Request) {
       }, { status: 404 });
     }
 
-    // Correction ici : attendre la résolution de la promesse cookies()
     const cookiesList = await cookies();
     const reservationToken = cookiesList.get(`reservation_${giftId}`);
 

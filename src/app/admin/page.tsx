@@ -153,9 +153,9 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Widgets de statistiques */}
+            {/* Widgets Stats*/}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Total des cadeaux */}
+              {/* Total Gifts */}
               <div className="bg-white rounded-xl shadow-sm border p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -173,7 +173,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Cadeaux réservés */}
+              {/* Reserved Gifts */}
               <div className="bg-white rounded-xl shadow-sm border p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -191,7 +191,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Cadeaux disponibles */}
+              {/* Available Gifts */}
               <div className="bg-white rounded-xl shadow-sm border p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -210,7 +210,7 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Liste des cadeaux */}
+            {/* Gift List */}
             <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
               <div className="px-6 py-4 border-b">
                 <h2 className="text-lg font-medium text-gray-800">Liste des cadeaux</h2>

@@ -1,24 +1,13 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { GiftCard } from './GiftCard';
 import { Gift, ReservationData } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PRIORITY_OPTIONS } from '@/lib/constants';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-// Types
-interface GiftListProps {
-  selectedPriority: string;
-  onPriorityChange: (priority: string) => void;
-}
-
-interface Filters {
-  search: string;
-  category: string;
-  sort: string;
-  showAvailable: boolean;
-}
+import { Filter, X } from 'lucide-react';
+import { CategorySelect } from './CategorySelect';
 
 const variants = {
   container: {
@@ -30,7 +19,6 @@ const variants = {
       }
     }
   },
-  
   item: {
     hidden: { opacity: 0, y: 20 },
     show: { 
@@ -42,79 +30,21 @@ const variants = {
         damping: 24
       }
     }
-  },
-  
-  filter: {
-    hidden: { height: 0, opacity: 0 },
-    show: { 
-      height: "auto", 
-      opacity: 1,
-      transition: {
-        height: {
-          type: "spring",
-          stiffness: 400,
-          damping: 30
-        },
-        opacity: {
-          duration: 0.2
-        }
-      }
-    }
   }
 };
 
-const SearchBar = ({ value, onChange }: { 
-  value: string; 
-  onChange: (value: string) => void;
-}) => (
-  <div className="relative flex-1">
-    <input
-      type="text"
-      placeholder="Rechercher un cadeau..."
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full pl-4 pr-10 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all"
-    />
-    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-      <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-    </div>
-  </div>
-);
-
-const FilterToggle = ({ showFilters, onToggle }: {
-  showFilters: boolean;
-  onToggle: () => void;
-}) => (
-  <button
-    onClick={onToggle}
-    className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all font-medium"
-  >
-    <span>Filtres</span>
-    <motion.span 
-      animate={{ rotate: showFilters ? 180 : 0 }}
-      transition={{ type: "spring", stiffness: 300, damping: 25 }}
-      className="text-xs"
-    >
-      ↓
-    </motion.span>
-  </button>
-);
-
-export const GiftList = ({ selectedPriority, onPriorityChange }: GiftListProps) => {
+export const GiftList = ({ selectedPriority, onPriorityChange }: {
+  selectedPriority: string;
+  onPriorityChange: (priority: string) => void;
+}) => {
   const queryClient = useQueryClient();
-  
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<Filters>({
-    search: '',
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [filters, setFilters] = useState({
     category: '',
-    sort: '',
     showAvailable: false,
   });
-  const [mounted, setMounted] = useState(false);
 
-  const { data: gifts = [], isLoading, error: fetchError } = useQuery({
+  const { data: gifts = [], isLoading } = useQuery({
     queryKey: ['gifts'],
     queryFn: async () => {
       const response = await fetch('/api/gifts');
@@ -130,229 +60,205 @@ export const GiftList = ({ selectedPriority, onPriorityChange }: GiftListProps) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to reserve gift');
-      }
+      if (!response.ok) throw new Error('Échec de la réservation');
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gifts'] });
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['gifts'] });
+      }, 2000); 
     }
   });
+  const sortedAndFilteredGifts = React.useMemo(() => {
+    return gifts
+      .filter((gift: Gift) => {
+        const matchesCategory = !filters.category || gift.category === filters.category;
+        const matchesPriority = !selectedPriority || gift.priority === selectedPriority;
+        const matchesAvailability = !filters.showAvailable || !gift.reservation;
+        return matchesCategory && matchesPriority && matchesAvailability;
+      })
+      .sort((a: Gift, b: Gift) => {
+        if (a.reservation && !b.reservation) return 1;
+        if (!a.reservation && b.reservation) return -1;
+
+        const priorityOrder = {
+          'MUST_HAVE': 0,
+          'REALLY_WANT': 1,
+          'NORMAL': 2,
+          'NICE_TO_HAVE': 3
+        };
+        return (priorityOrder[a.priority] || 999) - (priorityOrder[b.priority] || 999);
+      });
+  }, [gifts, selectedPriority, filters]);
+
   const categories = React.useMemo(() => (
-    [...new Set(gifts.map((gift: Gift) => gift.category))].sort() as string[]
+    [...new Set(gifts.map((gift: Gift) => gift.category))].sort()
   ), [gifts]);
 
-  const sortGifts = (gifts: Gift[], selectedPriority: string, filters: Filters) => {
-    let filtered = gifts.filter((gift: Gift) => {
-      const matchesSearch = !filters.search || 
-        gift.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-        gift.description?.toLowerCase().includes(filters.search.toLowerCase());
+  const filteredGifts = React.useMemo(() => {
+    return gifts.filter((gift: Gift) => {
       const matchesCategory = !filters.category || gift.category === filters.category;
       const matchesPriority = !selectedPriority || gift.priority === selectedPriority;
       const matchesAvailability = !filters.showAvailable || !gift.reservation;
-      return matchesSearch && matchesCategory && matchesPriority && matchesAvailability;
+      return matchesCategory && matchesPriority && matchesAvailability;
     });
-  
-    // Tri par défaut : d'abord par statut de réservation, puis par priorité
-    filtered = [...filtered].sort((a: Gift, b: Gift) => {
-      // Réservés en bas
-      if (a.reservation && !b.reservation) return 1;
-      if (!a.reservation && b.reservation) return -1;
-      
-      // Tri par priorité (on considère que les priorités sont des nombres, plus petit = plus important)
-      const priorityA = parseInt(a.priority) || 999;
-      const priorityB = parseInt(b.priority) || 999;
-      if (priorityA !== priorityB) {
-        return priorityA - priorityB;
-      }
-      
-      return 0;
-    });
-  
-    // Tri supplémentaire par prix si demandé
-    if (filters.sort) {
-      filtered = filtered.sort((a: Gift, b: Gift) => {
-        const priceA = a.price ?? 0;
-        const priceB = b.price ?? 0;
-        return filters.sort === 'price-asc' ? priceA - priceB : priceB - priceA;
-      });
-    }
-  
-    return filtered;
-  };
-  
-  // Dans le GiftList component
-  const filteredGifts = React.useMemo(() => {
-    return sortGifts(gifts, selectedPriority, filters);
   }, [gifts, selectedPriority, filters]);
-  // Effects
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
-  // Handlers
   const handleReserve = async (giftId: string, data: Omit<ReservationData, 'giftId'>) => {
-    try {
-      await reserveMutation.mutateAsync({ ...data, giftId });
-      return;
-    } catch (error) {
-      throw error;
-    }
+    await reserveMutation.mutateAsync({ ...data, giftId });
   };
 
-  const handleFilterChange = (key: keyof Filters, value: string | boolean) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  if (!mounted) return null;
+  const PriorityFilters = () => (
+    <div className="flex flex-wrap gap-2">
+      <button
+        onClick={() => onPriorityChange('')}
+        className={`px-4 py-2 rounded-full text-sm transition-all ${
+          selectedPriority === '' 
+            ? 'bg-amber-600 text-white' 
+            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+        }`}
+      >
+        Tous
+      </button>
+      {PRIORITY_OPTIONS.map((priority) => (
+        <button
+          key={priority.id}
+          onClick={() => onPriorityChange(priority.id)}
+          className={`px-4 py-2 rounded-full text-sm transition-all whitespace-nowrap ${
+            selectedPriority === priority.id 
+              ? 'bg-amber-600 text-white' 
+              : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          {priority.label}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
-    <motion.div 
-      className="space-y-6"
-      initial="hidden"
-      animate="show"
-      variants={variants.container}
-    >
-      {/* Search and Filters */}
-      <motion.div variants={variants.item} className="space-y-4">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 bg-white rounded-xl p-4 shadow-sm">
-          <SearchBar 
-            value={filters.search}
-            onChange={(value) => handleFilterChange('search', value)}
-          />
-          <FilterToggle 
-            showFilters={showFilters}
-            onToggle={() => setShowFilters(!showFilters)}
-          />
-        </div>
+    <div className="space-y-6">
+      <div className="hidden md:block space-y-4 bg-white rounded-xl p-4 shadow-sm">
+        <PriorityFilters />
+        
+        <div className="flex gap-6 items-center mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+              Catégorie :
+            </label>
+            <select
+              value={filters.category}
+              onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
+              className="px-4 py-2 rounded-xl border border-amber-200 focus:ring-2 focus:ring-amber-100 focus:border-amber-300 bg-white text-sm"
+            >
+              <option value="">Toutes les catégories</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Priority Filter */}
-        <motion.div 
-          variants={variants.item} 
-          className="flex flex-wrap gap-2 justify-start bg-white rounded-xl p-4 shadow-sm overflow-x-auto scrollbar-hide"
-        >
-          <button
-            onClick={() => onPriorityChange('')}
-            className={`px-4 py-2 rounded-full text-sm transition-all ${
-              selectedPriority === '' 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Tous
-          </button>
-          {PRIORITY_OPTIONS.map((priority) => (
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+              Uniquement disponibles
+            </label>
             <button
-              key={priority.id}
-              onClick={() => onPriorityChange(priority.id)}
-              className={`px-4 py-2 rounded-full text-sm transition-all whitespace-nowrap ${
-                selectedPriority === priority.id 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+              onClick={() => setFilters(prev => ({ ...prev, showAvailable: !prev.showAvailable }))}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                filters.showAvailable ? 'bg-amber-600' : 'bg-gray-200'
               }`}
             >
-              {priority.label}
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  filters.showAvailable ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
             </button>
-          ))}
-        </motion.div>
+          </div>
+        </div>
+      </div>
 
-        {/* Additional Filters */}
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              variants={variants.filter}
-              initial="hidden"
-              animate="show"
-              exit="hidden"
-              className="bg-white rounded-xl p-4 shadow-sm overflow-hidden"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Category Filter */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Catégorie
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={filters.category}
-                      onChange={(e) => handleFilterChange('category', e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-300 bg-gray-50 appearance-none pr-10"
-                    >
-                      <option value="">Toutes les catégories</option>
-                      {categories.map((category: string) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                      <svg className="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setShowMobileFilters(!showMobileFilters)}
+        className="fixed bottom-6 right-6 bg-amber-600 text-white p-4 rounded-full shadow-lg hover:bg-amber-700 transition-colors z-50 md:hidden"
+      >
+        {showMobileFilters ? <X className="w-6 h-6" /> : <Filter className="w-6 h-6" />}
+      </motion.button>
 
-                {/* Sort Filter */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Trier par
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={filters.sort}
-                      onChange={(e) => handleFilterChange('sort', e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-300 bg-gray-50 appearance-none pr-10"
-                    >
-                      <option value="">Aucun tri</option>
-                      <option value="price-asc">Prix croissant</option>
-                      <option value="price-desc">Prix décroissant</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                      <svg className="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Availability Filter */}
-                <div className="flex items-center p-3 rounded-lg bg-gray-50">
-                  <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700">
-                      Uniquement disponibles
-                    </label>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Masquer les cadeaux déjà réservés
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleFilterChange('showAvailable', !filters.showAvailable)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
-                      filters.showAvailable ? 'bg-blue-600' : 'bg-gray-200'
-                    }`}
+      <AnimatePresence>
+        {showMobileFilters && (
+          <motion.div
+            initial={{ opacity: 0, y: "100%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "100%" }}
+            className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-lg z-40 md:hidden"
+            style={{ maxHeight: "85vh" }}
+          >
+            <div className="overflow-y-auto p-6 max-h-[85vh]">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-medium text-gray-900">Filtres</h2>
+                  <button 
+                    onClick={() => setShowMobileFilters(false)}
+                    className="text-gray-400 hover:text-gray-500"
                   >
-                    <span className="sr-only">
-                      {filters.showAvailable ? 'Désactiver' : 'Activer'} le filtre de disponibilité
-                    </span>
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        filters.showAvailable ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+                
+                <div className="space-y-6 pb-20">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Priorité
+                    </label>
+                    <PriorityFilters />
+                  </div>
 
-      {/* Content */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Catégorie
+                    </label>
+                    <CategorySelect
+                      value={filters.category}
+                      onChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
+                      categories={categories}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-gray-700">
+                        Uniquement disponibles
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Masquer les cadeaux déjà réservés
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, showAvailable: !prev.showAvailable }))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        filters.showAvailable ? 'bg-amber-600' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          filters.showAvailable ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {[...Array(8)].map((_, index) => (
             <motion.div
               key={index}
@@ -367,28 +273,16 @@ export const GiftList = ({ selectedPriority, onPriorityChange }: GiftListProps) 
             </motion.div>
           ))}
         </div>
-      ) : fetchError ? (
+      ) : (
         <motion.div 
-          variants={variants.item}
-          className="text-center py-12"
-        >
-          <div className="inline-block p-4 rounded-full bg-red-100 mb-4">
-            <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <p className="text-red-600">
-            Une erreur est survenue lors du chargement des cadeaux
-          </p>
-        </motion.div>
-      ) : filteredGifts.length > 0 ? (
-        <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
           variants={variants.container}
+          initial="hidden"
+          animate="show"
         >
-          {filteredGifts.map((gift: Gift) => (
+           {sortedAndFilteredGifts.map((gift: Gift) => (
             <motion.div 
-              key={gift.id} 
+              key={gift.id}
               variants={variants.item}
               layout
             >
@@ -399,33 +293,7 @@ export const GiftList = ({ selectedPriority, onPriorityChange }: GiftListProps) 
             </motion.div>
           ))}
         </motion.div>
-      ) : (
-        <motion.div 
-          variants={variants.item}
-          className="text-center py-12"
-        >
-          <div className="inline-block p-4 rounded-full bg-gray-100 mb-4">
-            <span className="text-2xl">🔍</span>
-          </div>
-          <p className="text-gray-500">
-            Aucun cadeau ne correspond à vos critères.
-          </p>
-          <button
-            onClick={() => {
-              setFilters({
-                search: '',
-                category: '',
-                sort: '',
-                showAvailable: false,
-              });
-              onPriorityChange('');
-            }}
-            className="mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Réinitialiser les filtres
-          </button>
-        </motion.div>
       )}
-    </motion.div>
+    </div>
   );
 };

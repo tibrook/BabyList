@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 
-// Configuration de Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -21,16 +20,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convertir le fichier en Buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Upload vers Cloudinary
     const uploadPromise = new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         { 
           resource_type: 'auto',
-          folder: 'baby-list' // optionnel: pour organiser les images dans un dossier
+          folder: 'baby-list' 
         },
         (error, result) => {
           if (error) reject(error);

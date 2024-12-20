@@ -81,7 +81,7 @@ export const ReservationModal = ({ gift, onClose, onReserve }: ReservationModalP
               Réservation confirmée !
             </h3>
             <p className="text-gray-600">
-              Merci d&apos;avoir réservé ce cadeau pour notre petit matelot.
+              Merci d&apos;avoir réservé ce cadeau pour notre petit marsu.
             </p>
           </motion.div>
         ) : (

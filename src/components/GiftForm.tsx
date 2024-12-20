@@ -106,7 +106,6 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 pb-24">
-      {/* Zone de dépôt d'image */}
       <div 
         onClick={() => fileInputRef.current?.click()}
         className="group relative h-64 bg-white rounded-xl overflow-hidden border-2 border-dashed border-gray-200 hover:border-rose-300 transition-all cursor-pointer"
@@ -142,7 +141,6 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
         />
       </div>
 
-      {/* Informations générales */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <h3 className="text-base font-semibold text-gray-900">Informations générales</h3>
@@ -221,7 +219,6 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
         </div>
       </div>
 
-      {/* Priorité */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <h3 className="text-base font-semibold text-gray-900">Priorité</h3>
@@ -265,7 +262,6 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
         </div>
       </div>
 
-      {/* Catégorie */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <h3 className="text-base font-semibold text-gray-900">Catégorie</h3>
@@ -314,7 +310,6 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
         </div>
       </div>
 
-      {/* Barre de navigation fixe */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           {error && (
