@@ -1,17 +1,15 @@
 // app/api/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
+import { prisma } from '@/lib/prisma';
+import sharp from 'sharp';
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limite
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const giftId = formData.get('giftId') as string;
 
     if (!file) {
       return NextResponse.json(
@@ -20,25 +18,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: 'File size exceeds 5MB limit' },
+        { status: 400 }
+      );
+    }
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadPromise = new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { 
-          resource_type: 'auto',
-          folder: 'baby-list' 
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      ).end(buffer);
+    const optimizedBuffer = await sharp(buffer)
+      .resize(800, 800, { 
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .webp({
+        quality: 80,
+        effort: 4 
+      })
+      .toBuffer();
+
+    const base64 = optimizedBuffer.toString('base64');
+    const imageType = 'image/webp'; // Type MIME fixe pour WebP
+    const dataUrl = `data:${imageType};base64,${base64}`;
+
+    const gift = await prisma.gift.update({
+      where: { id: giftId },
+      data: {
+        imageData: base64,
+        imageType: imageType,
+        imageUrl: dataUrl
+      }
     });
 
-    const result = await uploadPromise;
-    
-    return NextResponse.json(result);
+    return NextResponse.json({
+      success: true,
+      imageUrl: dataUrl
+    });
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(

@@ -13,7 +13,9 @@ model Gift {
   title       String
   description String?
   price       Float?
-  imageUrl    String?
+  imageUrl    String?     
+  imageData   String?     
+  imageType   String?     
   category    String
   productUrl  String?
   priority    String      @default("NORMAL") 

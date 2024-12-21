@@ -1,16 +1,15 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   images: {
-    domains: ['res.cloudinary.com'], 
-  }
-};
-export default nextConfig;
-module.exports = {
+    domains: ['res.cloudinary.com'],
+  },
   eslint: {
-    ignoreDuringBuilds: true, 
+    ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true, 
+    ignoreBuildErrors: true,
   },
 };
+
+module.exports = nextConfig;

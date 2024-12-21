@@ -4,6 +4,8 @@ export type Gift = {
   description?: string | null
   price?: number | null
   imageUrl?: string | null
+  imageData?: string; 
+  imageType?: string;
   category: string
   priority: string
   productUrl?: string | null
