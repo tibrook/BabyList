@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono,Baloo_2,Comfortaa, Quicksand } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
+import { ScrollToTop } from '@/components/ScrollToTop';
 
 const comfortaa = Comfortaa({ 
   subsets: ['latin'],
@@ -46,6 +47,7 @@ export default function RootLayout({
       >
         <Providers>
           {children}
+          <ScrollToTop />
         </Providers>
       </body>
     </html>

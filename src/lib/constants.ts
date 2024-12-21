@@ -20,7 +20,7 @@ export const DEFAULT_CATEGORIES = [
     { 
       id: 'REALLY_WANT', 
       label: 'Vraiment souhaité', 
-      color: 'bg-violet-600 text-white ring-1 ring-violet-500 shadow-md' // Changé pour violet
+      color: 'bg-violet-600 text-white ring-1 ring-violet-500 shadow-md'
     },
     { 
       id: 'NORMAL', 
@@ -30,6 +30,6 @@ export const DEFAULT_CATEGORIES = [
     { 
       id: 'NICE_TO_HAVE', 
       label: 'Ce serait sympa', 
-      color: 'bg-blue-600 text-white ring-1 ring-blue-500 shadow-md' // Changé pour emerald
+      color: 'bg-blue-600 text-white ring-1 ring-blue-500 shadow-md' 
     }
   ];

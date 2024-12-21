@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Vérification de la taille
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: 'File size exceeds 5MB limit' },
@@ -51,18 +50,16 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    // Convertir en base64 et créer la data URL
     const base64 = buffer.toString('base64');
     const imageType = file.type;
     const dataUrl = `data:${imageType};base64,${base64}`;
 
-    // Mettre à jour le gift avec l'image encodée
     const gift = await prisma.gift.update({
       where: { id: giftId },
       data: {
-        imageData: base64,      // Stocker le base64 pur
-        imageType: imageType,   // Stocker le type MIME
-        imageUrl: dataUrl       // URL data complète pour utilisation directe
+        imageData: base64,      
+        imageType: imageType,   
+        imageUrl: dataUrl       
       }
     });
 

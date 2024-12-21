@@ -25,7 +25,6 @@ async function convertImageUrlToBase64(imageUrl) {
 
 async function migrateImages() {
   try {
-    // Récupérer tous les cadeaux avec des images Cloudinary
     const gifts = await prisma.gift.findMany({
       where: {
         imageUrl: {
@@ -36,7 +35,6 @@ async function migrateImages() {
 
     console.log(`Found ${gifts.length} gifts with Cloudinary images`);
 
-    // Convertir chaque image
     for (const gift of gifts) {
       try {
         if (gift.imageUrl) {
@@ -68,5 +66,4 @@ async function migrateImages() {
   }
 }
 
-// Exécuter la migration
 migrateImages();

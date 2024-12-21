@@ -23,13 +23,11 @@ export const GiftCardImage = ({ gift, priorityOption }: GiftCardImageProps) => {
     if (inView && !imageSource && !imageError) {
       const loadImage = async () => {
         try {
-          // Si nous avons une URL Cloudinary, l'utiliser directement
           if (gift.imageUrl?.includes('cloudinary')) {
             setImageSource(gift.imageUrl);
             return;
           }
 
-          // Sinon, charger les données base64 depuis notre API
           const response = await fetch(`/api/gifts/${gift.id}/image`);
           if (!response.ok) throw new Error('Failed to load image');
           

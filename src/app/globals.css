@@ -13,7 +13,28 @@
     --foreground: #ededed;
   }
 }
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
 
+  body {
+    @apply text-gray-800 leading-relaxed;
+  }
+
+  /* Amélioration du style de défilement */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-amber-200 rounded-full;
+  }
+}
 body {
   color: var(--foreground);
   background: var(--background);
