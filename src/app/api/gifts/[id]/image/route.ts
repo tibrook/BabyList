@@ -4,11 +4,21 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
+    const id = resolvedParams.id;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID required' },
+        { status: 400 }
+      );
+    }
+
     const gift = await prisma.gift.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         imageData: true,
         imageType: true
@@ -16,15 +26,21 @@ export async function GET(
     });
 
     if (!gift?.imageData) {
-      return new NextResponse('Image not found', { status: 404 });
+      return NextResponse.json(
+        { error: 'Image not found' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({
       imageData: gift.imageData,
-      imageType: gift.imageType
+      imageType: gift.imageType || 'image/webp'
     });
   } catch (error) {
-    console.error('Error:', error);
-    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+    console.error('Error serving image:', error);
+    return NextResponse.json(
+      { error: 'Failed to load image' },
+      { status: 500 }
+    );
   }
 }

@@ -31,11 +31,11 @@ export const ScrollToTop = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 p-3 rounded-full bg-amber-600 text-white shadow-lg hover:bg-amber-700 transition-colors z-50"
+          className="fixed bottom-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-amber-600 text-white shadow-lg hover:bg-amber-700 transition-colors z-50"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
         >
-          <ArrowUp className="w-6 h-6" />
+          <ArrowUp className="w-5 h-5" />
         </motion.button>
       )}
     </AnimatePresence>
