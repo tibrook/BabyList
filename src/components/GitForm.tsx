@@ -1,8 +1,10 @@
+// components/GiftForm.tsx
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Gift } from '@/lib/types';
 import { DEFAULT_CATEGORIES, PRIORITY_OPTIONS } from '@/lib/constants';
+import { Upload, X } from 'lucide-react';
 
 interface GiftFormProps {
   onSubmit: (giftData: Partial<Gift>) => Promise<void>;
@@ -15,8 +17,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [newCategory, setNewCategory] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-  
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<Partial<Gift>>({
@@ -30,10 +31,6 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
   });
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
     if (initialData) {
       setFormData({
         title: initialData.title,
@@ -42,7 +39,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
         category: initialData.category,
         productUrl: initialData.productUrl,
         imageUrl: initialData.imageUrl,
-        priority: initialData.priority 
+        priority: initialData.priority
       });
       setImagePreview(initialData.imageUrl || null);
     }
@@ -53,6 +50,9 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
     if (!file) return;
 
     setLoading(true);
+    setError(null);
+    setUploadProgress(0);
+
     try {
       const preview = URL.createObjectURL(file);
       setImagePreview(preview);
@@ -60,20 +60,58 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
+      const xhr = new XMLHttpRequest();
+      
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 100;
+          setUploadProgress(Math.round(progress));
+        }
+      };
+
+      const uploadPromise = new Promise((resolve, reject) => {
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              resolve(response);
+            } catch (e) {
+              reject(new Error('Invalid response format'));
+            }
+          } else {
+            reject(new Error('Upload failed'));
+          }
+        };
+        xhr.onerror = () => reject(new Error('Network error'));
       });
 
-      if (!response.ok) throw new Error('Upload failed');
+      xhr.open('POST', '/api/upload', true);
+      xhr.send(formData);
 
-      const data = await response.json();
-      setFormData(prev => ({ ...prev, imageUrl: data.secure_url }));
+      const response = await uploadPromise as any;
+
+      setFormData(prev => ({
+        ...prev,
+        imageUrl: response.secure_url,
+        imageType: response.imageType,
+        imageData: response.imageData
+      }));
+
+      setUploadProgress(100);
     } catch (error) {
       console.error('Upload error:', error);
       setError('Erreur lors du téléchargement de l\'image');
+      setImagePreview(formData.imageUrl || null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImagePreview(null);
+    setFormData(prev => ({ ...prev, imageUrl: '', imageData: '', imageType: '' }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -89,54 +127,22 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-  
+
     try {
-      if (fileInputRef.current?.files?.length) {
-        const imageFormData = new FormData();
-        imageFormData.append('file', fileInputRef.current.files[0]);
-        
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: imageFormData
-        });
-  
-        if (!uploadResponse.ok) {
-          throw new Error('Image upload failed');
-        }
-  
-        const imageData = await uploadResponse.json();
-        
-        setFormData(prev => ({
-          ...prev,
-          imageUrl: imageData.secure_url,
-          imageType: imageData.imageType,
-          imageData: imageData.imageData
-        }));
-      }
-  
-      const submitData = {
-        ...formData,
-        price: formData.price ? parseFloat(formData.price.toString()) : null,
-        priority: formData.priority || 'NORMAL'
-      };
-  
-      await onSubmit(submitData);
+      await onSubmit(formData);
     } catch (error) {
       console.error('Submit error:', error);
-      setError(error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+      setError('Erreur lors de la sauvegarde');
     } finally {
       setLoading(false);
     }
   };
 
-  if (!mounted) {
-    return null; 
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 pb-24">
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Zone de drop d'image */}
       <div 
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !loading && fileInputRef.current?.click()}
         className="group relative h-64 bg-white rounded-xl overflow-hidden border-2 border-dashed border-gray-200 hover:border-rose-300 transition-all cursor-pointer"
       >
         {imagePreview ? (
@@ -151,16 +157,40 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
                 Modifier l&apos;image
               </span>
             </div>
+            {/* Bouton de suppression */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemoveImage();
+              }}
+              className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 group-hover:text-rose-500 transition-colors duration-200">
-            <svg className="w-12 h-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
+            <Upload className="w-12 h-12 mb-4" />
             <span className="text-sm font-medium">Ajouter une photo</span>
             <span className="text-xs text-gray-400 mt-2">JPG ou PNG jusqu&apos;à 5 MB</span>
           </div>
         )}
+        
+        {loading && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <div className="text-center text-white">
+              <div className="mb-2">Upload en cours...</div>
+              <div className="w-48 h-2 bg-white/30 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-white rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+        
         <input
           ref={fileInputRef}
           type="file"
@@ -170,6 +200,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
         />
       </div>
 
+      {/* Informations générales */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <h3 className="text-base font-semibold text-gray-900">Informations générales</h3>
@@ -248,6 +279,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
         </div>
       </div>
 
+      {/* Priorité */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <h3 className="text-base font-semibold text-gray-900">Priorité</h3>
@@ -291,6 +323,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
         </div>
       </div>
 
+      {/* Catégorie */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
           <h3 className="text-base font-semibold text-gray-900">Catégorie</h3>
@@ -339,6 +372,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
         </div>
       </div>
 
+      {/* Barre d'actions fixe */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           {error && (

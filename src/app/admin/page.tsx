@@ -3,70 +3,53 @@
 import React, { useState, useEffect } from 'react';
 import { GiftForm } from '@/components/GiftForm';
 import { AdminGiftList } from '@/components/AdminGiftList';
+import { AdminStats } from '@/components/AdminStats';
+import { AdminHeader } from '@/components/AdminHeader';
 import { Gift } from '@/lib/types';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-interface GiftStats {
-  total: number;
-  reserved: number;
-  available: number;
-  totalValue: number;
-  reservedValue: number;
-}
+const calculateStats = (gifts: Gift[]) => {
+  return gifts.reduce((acc, gift) => {
+    acc.total++;
+    
+    if (gift.reservation) {
+      acc.reserved++;
+    } else {
+      acc.available++;
+    }
 
-export default function AdminPage() {
-  const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
-  const [isFormVisible, setIsFormVisible] = useState(false);
-  const [stats, setStats] = useState<GiftStats>({
+    if (gift.price) {
+      acc.totalValue += gift.price;
+      if (gift.reservation) {
+        acc.reservedValue += gift.price;
+      }
+    }
+    
+    return acc;
+  }, {
     total: 0,
     reserved: 0,
     available: 0,
     totalValue: 0,
     reservedValue: 0
   });
-  const [loading, setLoading] = useState(true);
+};
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch('/api/gifts');
-        if (!response.ok) throw new Error('Failed to fetch gifts');
-        const gifts: Gift[] = await response.json();
-        
-        const stats = gifts.reduce((acc, gift) => {
-          acc.total++;
-          
-          if (gift.reservation) {
-            acc.reserved++;
-          } else {
-            acc.available++;
-          }
+export default function AdminPage() {
+  const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const queryClient = useQueryClient();
 
-          if (gift.price) {
-            acc.totalValue += gift.price;
-            if (gift.reservation) {
-              acc.reservedValue += gift.price;
-            }
-          }
-          
-          return acc;
-        }, {
-          total: 0,
-          reserved: 0,
-          available: 0,
-          totalValue: 0,
-          reservedValue: 0
-        });
+  const { data: gifts = [], isLoading } = useQuery({
+    queryKey: ['admin-gifts'],
+    queryFn: async () => {
+      const response = await fetch('/api/gifts');
+      if (!response.ok) throw new Error('Failed to fetch gifts');
+      return response.json();
+    }
+  });
 
-        setStats(stats);
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, [isFormVisible]); 
+  const stats = calculateStats(gifts);
 
   const handleEdit = (gift: Gift) => {
     setSelectedGift(gift);
@@ -96,28 +79,36 @@ export default function AdminPage() {
 
     setIsFormVisible(false);
     setSelectedGift(null);
+    queryClient.invalidateQueries({ queryKey: ['admin-gifts'] });
+  };
+
+  const handleDelete = async (giftId: string) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce cadeau ?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/gifts/${giftId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete gift');
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['admin-gifts'] });
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Erreur lors de la suppression');
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50/50 to-white">
-      {/* En-tête fixe */}
-      <header className="sticky top-0 z-10 bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            <span className="text-rose-600 text-2xl">⚙️</span>
-            Administration
-          </h1>
-          {!isFormVisible && (
-            <button
-              onClick={handleAdd}
-              className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors flex items-center gap-2"
-            >
-              <span>+</span>
-              Ajouter un cadeau
-            </button>
-          )}
-        </div>
-      </header>
+      <AdminHeader 
+        showAddButton={!isFormVisible} 
+        onAdd={handleAdd} 
+      />
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         {isFormVisible ? (
@@ -153,69 +144,16 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Widgets Stats*/}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Total Gifts */}
-              <div className="bg-white rounded-xl shadow-sm border p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium text-gray-500">Total des cadeaux</div>
-                    <div className="text-2xl font-semibold text-gray-900 mt-1">
-                      {loading ? '...' : stats.total}
-                    </div>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-600">
-                    🎁
-                  </div>
-                </div>
-                <div className="mt-4 text-sm text-gray-600">
-                  Valeur totale: {loading ? '...' : `${stats.totalValue.toLocaleString('fr-FR')} €`}
-                </div>
-              </div>
+            <AdminStats loading={isLoading} stats={stats} />
 
-              {/* Reserved Gifts */}
-              <div className="bg-white rounded-xl shadow-sm border p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium text-gray-500">Cadeaux réservés</div>
-                    <div className="text-2xl font-semibold text-green-600 mt-1">
-                      {loading ? '...' : stats.reserved}
-                    </div>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-                    ✓
-                  </div>
-                </div>
-                <div className="mt-4 text-sm text-gray-600">
-                  Valeur réservée: {loading ? '...' : `${stats.reservedValue.toLocaleString('fr-FR')} €`}
-                </div>
-              </div>
-
-              {/* Available Gifts */}
-              <div className="bg-white rounded-xl shadow-sm border p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium text-gray-500">Cadeaux disponibles</div>
-                    <div className="text-2xl font-semibold text-blue-600 mt-1">
-                      {loading ? '...' : stats.available}
-                    </div>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                    🛍️
-                  </div>
-                </div>
-                <div className="mt-4 text-sm text-gray-600">
-                  Valeur disponible: {loading ? '...' : `${(stats.totalValue - stats.reservedValue).toLocaleString('fr-FR')} €`}
-                </div>
-              </div>
-            </div>
-
-            {/* Gift List */}
             <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
               <div className="px-6 py-4 border-b">
                 <h2 className="text-lg font-medium text-gray-800">Liste des cadeaux</h2>
               </div>
-              <AdminGiftList onEdit={handleEdit} />
+              <AdminGiftList 
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             </div>
           </div>
         )}
