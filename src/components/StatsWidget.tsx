@@ -1,5 +1,4 @@
 import React from 'react';
-import { Gift } from '@/lib/types';
 
 interface StatsWidgetProps {
   icon: string;

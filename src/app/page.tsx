@@ -48,7 +48,7 @@ const imageVariants = {
   }
 };
 
-const FloatingIllustration = ({ imageSrc, className = "", delay = 0, ...props }) => (
+const FloatingIllustration = ({ imageSrc, className = "", ...props }) => (
   <motion.div
     className={`absolute pointer-events-none ${className}`}
     variants={imageVariants}
@@ -126,7 +126,7 @@ const Home = () => {
         className="relative overflow-hidden"
         animate={{
           paddingTop: headerMoved ? "1rem" : "2rem",
-          marginTop: headerMoved ? "0rem" : "0rem"
+          marginTop: "0rem"
         }}
         transition={{
           duration: 0.6,
@@ -141,12 +141,10 @@ const Home = () => {
               <FloatingIllustration 
                 imageSrc="/images/babyBreton.png"
                 className="left-4 top-8 md:left-8"
-                delay={0.2}
               />
               <FloatingIllustration 
                 imageSrc="/images/marsu.jpg"
                 className="right-4 top-8 md:right-8"
-                delay={0.4}
               />
             </>
           )}
@@ -203,7 +201,7 @@ const Home = () => {
             className="text-gray-600 text-lg max-w-xl mx-auto leading-relaxed space-y-4"
           >
             <p className="text-amber-800 font-medium">
-              N'hésitez pas à chercher des alternatives d'occasion, ou à vous inspirer de ces suggestions pour trouver des équivalents. Le plus important pour nous est que le cadeau vienne du cœur ! 💛
+              N&apos;hésitez pas à chercher des alternatives d&apos;occasion, ou à vous inspirer de ces suggestions pour trouver des équivalents. Le plus important pour nous est que le cadeau vienne du cœur ! 💛
             </p>
           </motion.div>
         </div>

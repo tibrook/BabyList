@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { GiftForm } from '@/components/GiftForm';
 import { AdminGiftList } from '@/components/AdminGiftList';
 import { AdminStats } from '@/components/AdminStats';
@@ -118,12 +118,12 @@ export default function AdminPage() {
                 {selectedGift ? (
                   <>
                     <span className="text-blue-500">✏️</span>
-                    Modifier le cadeau
+                    {' '}Modifier le cadeau
                   </>
                 ) : (
                   <>
                     <span className="text-green-500">+</span>
-                    Ajouter un cadeau
+                    {' '}Ajouter un cadeau
                   </>
                 )}
               </h2>

@@ -41,7 +41,7 @@ export const GiftList = ({ selectedPriority, onPriorityChange }: {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filters, setFilters] = useState({
     category: '',
-    showAvailable: false,
+    showAvailable: true,
   });
 
   const { data: gifts = [], isLoading } = useQuery({

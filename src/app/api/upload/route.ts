@@ -42,9 +42,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      secure_url: dataUrl,
-      imageType: 'image/webp',
-      imageData: base64
+      secure_url: dataUrl,      
+      format: 'webp',           
+      imageType: 'image/webp',  
+      imageData: base64         
     });
   } catch (error) {
     console.error('Upload error:', error);

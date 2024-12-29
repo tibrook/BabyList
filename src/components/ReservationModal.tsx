@@ -113,7 +113,7 @@ export const ReservationModal = ({ gift, onClose, onReserve }: ReservationModalP
 
                 <div className="absolute bottom-3 left-4 text-white">
                   <h3 className="text-lg font-medium leading-tight">{gift.title}</h3>
-                  {gift.price && (
+                  {Boolean(gift.price) && (
                     <p className="text-sm text-white/90">{gift.price.toLocaleString('fr-FR')} €</p>
                   )}
                 </div>

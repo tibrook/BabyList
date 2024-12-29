@@ -2,15 +2,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+type Props = {
+  params: Promise<{ id: string }>;
+}
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: Props
 ) {
   try {
-    const resolvedParams = await params;
-    const id = resolvedParams.id;
+    const { id } = await params;
+    console.log('Fetching image for gift ID:', id);
 
     if (!id) {
+      console.log('No ID provided');
       return NextResponse.json(
         { error: 'ID required' },
         { status: 400 }
@@ -20,12 +25,19 @@ export async function GET(
     const gift = await prisma.gift.findUnique({
       where: { id },
       select: {
+        id: true,
+        title: true,
         imageData: true,
         imageType: true
       }
     });
 
-    if (!gift?.imageData) {
+    console.log('Found gift:', gift ? gift.id : 'null', 'title:', gift?.title);
+    console.log('Has imageData:', !!gift?.imageData);
+    console.log('ImageType:', gift?.imageType);
+
+    if (!gift || !gift.imageData) {
+      console.log('Gift or image not found');
       return NextResponse.json(
         { error: 'Image not found' },
         { status: 404 }

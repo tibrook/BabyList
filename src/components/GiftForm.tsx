@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Gift } from '@/lib/types';
 import { DEFAULT_CATEGORIES, PRIORITY_OPTIONS } from '@/lib/constants';
+import Image from 'next/image';
 
 interface GiftFormProps {
   onSubmit: (giftData: Partial<Gift>) => Promise<void>;
@@ -91,7 +92,10 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
     setError(null);
   
     try {
+      let submitData = { ...formData };
+      
       if (fileInputRef.current?.files?.length) {
+        console.log('New image selected, uploading...');
         const imageFormData = new FormData();
         imageFormData.append('file', fileInputRef.current.files[0]);
         
@@ -105,21 +109,35 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
         }
   
         const imageData = await uploadResponse.json();
+        console.log('Image upload response:', {
+          success: imageData.success,
+          hasImageData: !!imageData.imageData,
+          hasUrl: !!imageData.secure_url,
+          imageType: imageData.imageType
+        });
         
-        setFormData(prev => ({
-          ...prev,
+        // Mettre à jour les données du formulaire avec les informations de l'image
+        submitData = {
+          ...submitData,
           imageUrl: imageData.secure_url,
-          imageType: imageData.imageType,
-          imageData: imageData.imageData
-        }));
+          imageData: imageData.imageData,
+          imageType: imageData.imageType
+        };
+  
+        console.log('Prepared gift data:', {
+          hasImageData: !!submitData.imageData,
+          imageType: submitData.imageType
+        });
       }
   
-      const submitData = {
-        ...formData,
-        price: formData.price ? parseFloat(formData.price.toString()) : null,
-        priority: formData.priority || 'NORMAL'
+      // Nettoyer les données pour l'envoi
+      submitData = {
+        ...submitData,
+        price: submitData.price ? parseFloat(submitData.price.toString()) : null,
+        priority: submitData.priority || 'NORMAL'
       };
   
+      // Envoyer les données du cadeau
       await onSubmit(submitData);
     } catch (error) {
       console.error('Submit error:', error);
@@ -135,16 +153,19 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 pb-24">
-      <div 
+      <button 
+        type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="group relative h-64 bg-white rounded-xl overflow-hidden border-2 border-dashed border-gray-200 hover:border-rose-300 transition-all cursor-pointer"
+        className="w-full group relative h-64 bg-white rounded-xl overflow-hidden border-2 border-dashed border-gray-200 hover:border-rose-300 transition-all cursor-pointer"
       >
         {imagePreview ? (
           <div className="absolute inset-0">
-            <img
+            <Image
               src={imagePreview}
               alt="Aperçu"
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 1280px) 100vw, 1280px"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200">
               <span className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-sm font-medium text-gray-700">
@@ -168,7 +189,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
           onChange={handleImageUpload}
           className="hidden"
         />
-      </div>
+      </button>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
@@ -177,10 +198,11 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
         
         <div className="p-6 space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
               Titre du produit<span className="text-rose-500 ml-1">*</span>
             </label>
             <input
+              id="title"
               required
               type="text"
               value={formData.title || ''}
@@ -191,10 +213,11 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
               Description
             </label>
             <textarea
+              id="description"
               value={formData.description || ''}
               onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
               rows={3}
@@ -204,11 +227,11 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Lien vers le produit
-              <span className="text-gray-400 text-xs ml-2">(optionnel)</span>
+            <label htmlFor="productUrl" className="block text-sm font-medium text-gray-700 mb-2">
+              Lien vers le produit<span className="text-gray-400 text-xs ml-2">(optionnel)</span>
             </label>
             <input
+              id="productUrl"
               type="url"
               value={formData.productUrl || ''}
               onChange={e => setFormData(prev => ({ ...prev, productUrl: e.target.value }))}

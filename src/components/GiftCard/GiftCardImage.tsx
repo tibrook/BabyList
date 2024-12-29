@@ -5,9 +5,15 @@ import { Gift as GiftIcon } from 'lucide-react';
 import { type Gift } from '@/lib/types';
 import { useInView } from 'react-intersection-observer';
 import { ReservationOverlay } from './ReservationOverlay';
+
+interface PriorityOption {
+  id: 'MUST_HAVE' | 'REALLY_WANT' | 'NORMAL';
+  label: string;
+}
+
 interface GiftCardImageProps {
   gift: Gift;
-  priorityOption: any;
+  priorityOption: PriorityOption | null;
 }
 
 export const GiftCardImage = ({ gift, priorityOption }: GiftCardImageProps) => {
@@ -20,28 +26,61 @@ export const GiftCardImage = ({ gift, priorityOption }: GiftCardImageProps) => {
   });
 
   useEffect(() => {
-    if (inView && !imageSource && !imageError) {
-      const loadImage = async () => {
-        try {
-          if (gift.imageUrl?.includes('cloudinary')) {
-            setImageSource(gift.imageUrl);
-            return;
-          }
+    const loadImage = async () => {
+      try {
+        console.log('Loading image for gift:', gift.id);
+        
+        setImageError(false);
+        setImageLoaded(false);
+        setImageSource(null);
 
-          const response = await fetch(`/api/gifts/${gift.id}/image`);
-          if (!response.ok) throw new Error('Failed to load image');
-          
-          const data = await response.json();
-          setImageSource(`data:${data.imageType || 'image/jpeg'};base64,${data.imageData}`);
-        } catch (error) {
-          console.error('Error loading image:', error);
-          setImageError(true);
+        if (gift.imageData) {
+          console.log('Using direct imageData for gift:', gift.id);
+          const dataUrl = `data:${gift.imageType || 'image/webp'};base64,${gift.imageData}`;
+          setImageSource(dataUrl);
+          return;
         }
-      };
 
+        console.log('Fetching image from API for gift:', gift.id);
+        const response = await fetch(`/api/gifts/${gift.id}/image`);
+        
+        if (!response.ok) {
+          console.log('API returned error status:', response.status);
+          throw new Error(`Failed to load image: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.imageData) {
+          console.log('No image data in API response');
+          throw new Error('No image data received');
+        }
+
+        const dataUrl = `data:${data.imageType || 'image/webp'};base64,${data.imageData}`;
+        setImageSource(dataUrl);
+      } catch (error) {
+        console.error('Error loading image for gift', gift.id, ':', error);
+        setImageError(true);
+      }
+    };
+
+    if (inView && !imageSource && !imageError) {
       loadImage();
     }
-  }, [inView, gift.id, imageSource, gift.imageUrl]);
+  }, [inView, gift.id, gift.imageData, gift.imageType, imageError, imageSource]);
+
+  const getPriorityClass = (priorityId: string) => {
+    switch (priorityId) {
+      case 'MUST_HAVE':
+        return 'bg-rose-600 text-white';
+      case 'REALLY_WANT':
+        return 'bg-violet-600 text-white';
+      case 'NORMAL':
+        return 'bg-blue-600 text-white';
+      default:
+        return 'bg-emerald-600 text-white';
+    }
+  };
 
   return (
     <div ref={ref} className="relative w-full h-[65%] bg-gray-50">
@@ -87,10 +126,7 @@ export const GiftCardImage = ({ gift, priorityOption }: GiftCardImageProps) => {
           <span className={`
             px-3 py-1.5 rounded-xl text-sm font-medium 
             shadow-lg backdrop-blur-sm transition-colors
-            ${priorityOption.id === 'MUST_HAVE' ? 'bg-rose-600 text-white' :
-              priorityOption.id === 'REALLY_WANT' ? 'bg-violet-600 text-white' :
-              priorityOption.id === 'NORMAL' ? 'bg-blue-600 text-white' :
-              'bg-emerald-600 text-white'}
+            ${getPriorityClass(priorityOption.id)}
           `}>
             {priorityOption.label}
           </span>

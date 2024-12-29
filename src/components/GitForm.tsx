@@ -5,10 +5,17 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Gift } from '@/lib/types';
 import { DEFAULT_CATEGORIES, PRIORITY_OPTIONS } from '@/lib/constants';
 import { Upload, X } from 'lucide-react';
+import Image from 'next/image';
 
 interface GiftFormProps {
   onSubmit: (giftData: Partial<Gift>) => Promise<void>;
   initialData?: Gift;
+}
+
+interface UploadResponse {
+  secure_url: string;
+  imageType: string;
+  imageData: string;
 }
 
 export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
@@ -75,7 +82,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
             try {
               const response = JSON.parse(xhr.responseText);
               resolve(response);
-            } catch (e) {
+            } catch  {
               reject(new Error('Invalid response format'));
             }
           } else {
@@ -88,7 +95,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
       xhr.open('POST', '/api/upload', true);
       xhr.send(formData);
 
-      const response = await uploadPromise as any;
+      const response = await uploadPromise as UploadResponse;
 
       setFormData(prev => ({
         ...prev,
@@ -141,16 +148,18 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Zone de drop d'image */}
-      <div 
+      <button 
+        type="button"
         onClick={() => !loading && fileInputRef.current?.click()}
-        className="group relative h-64 bg-white rounded-xl overflow-hidden border-2 border-dashed border-gray-200 hover:border-rose-300 transition-all cursor-pointer"
+        className="group relative h-64 w-full bg-white rounded-xl overflow-hidden border-2 border-dashed border-gray-200 hover:border-rose-300 transition-all cursor-pointer"
       >
         {imagePreview ? (
           <div className="absolute inset-0">
-            <img
+            <Image
               src={imagePreview}
               alt="Aperçu"
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200">
               <span className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-sm font-medium text-gray-700">
@@ -198,7 +207,7 @@ export const GiftForm = ({ onSubmit, initialData }: GiftFormProps) => {
           onChange={handleImageUpload}
           className="hidden"
         />
-      </div>
+      </button>
 
       {/* Informations générales */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">

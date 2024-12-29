@@ -1,4 +1,7 @@
-const MobileIndicator = () => (
+import { motion } from 'framer-motion';
+import { ChevronRight } from 'lucide-react';
+
+export const MobileIndicator = () => (
     <motion.div 
       className="md:hidden flex items-center text-sky-600 text-sm"
       animate={{ x: [0, 5, 0] }}

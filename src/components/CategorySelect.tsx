@@ -30,9 +30,10 @@ export const CategorySelect = ({ value, onChange, categories }: CategorySelectPr
       <AnimatePresence>
         {isOpen && (
           <>
-            <div 
-              className="fixed inset-0 z-30" 
-              onClick={() => setIsOpen(false)} 
+            <button 
+              className="fixed inset-0 z-30 w-full h-full bg-transparent cursor-default" 
+              onClick={() => setIsOpen(false)}
+              aria-label="Fermer le menu"
             />
             
             <motion.div

@@ -1,7 +1,7 @@
 // GiftCard.tsx
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Gift } from '@/lib/types';
+import { Gift, PriorityOption } from '@/lib/types';
 import { PRIORITY_OPTIONS } from '@/lib/constants';
 import { ReservationModal } from '@/components/ReservationModal';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -46,7 +46,7 @@ export const GiftCard = ({ gift, onReserve }: GiftCardProps) => {
   const prefersReducedMotion = useReducedMotion();
   const queryClient = useQueryClient();
   
-  const priorityOption = PRIORITY_OPTIONS.find(p => p.id === gift.priority);
+  const priorityOption = PRIORITY_OPTIONS.find(p => p.id === gift.priority) as PriorityOption | undefined;
 
   const cancelMutation = useMutation({
     mutationFn: async (giftId: string) => {

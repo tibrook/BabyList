@@ -4,6 +4,7 @@ import { Search, Edit2, Trash2, Tag, Package } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Gift } from '@/lib/types';
 import { PRIORITY_OPTIONS } from '@/lib/constants';
+import Image from 'next/image';
 
 interface AdminGiftListProps {
   onEdit: (gift: Gift) => void;
@@ -24,7 +25,7 @@ export const AdminGiftList =  ({ onEdit, onDelete }: AdminGiftListProps) => {
     }
   });
 
-  const categories = [...new Set(gifts.map(gift => gift.category))].sort();
+  const categories = [...new Set(gifts.map(gift => gift.category))] as string[];
 
   const filteredGifts = gifts.filter(gift => {
     const matchesSearch = gift.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -32,6 +33,8 @@ export const AdminGiftList =  ({ onEdit, onDelete }: AdminGiftListProps) => {
     const matchesCategory = !selectedCategory || gift.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const SKELETON_IDS = ['a', 'b', 'c', 'd', 'e', 'f'];
 
   return (
     <div className="space-y-4">
@@ -63,8 +66,11 @@ export const AdminGiftList =  ({ onEdit, onDelete }: AdminGiftListProps) => {
       {/* Gift Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
         {isLoading ? (
-          Array(6).fill(null).map((_, index) => (
-            <div key={index} className="animate-pulse bg-white rounded-lg p-4 shadow-sm border">
+          SKELETON_IDS.map(id => (
+            <div 
+              key={`gift-skeleton-${id}`} 
+              className="animate-pulse bg-white rounded-lg p-4 shadow-sm border"
+            >
               <div className="h-40 bg-gray-200 rounded-lg mb-4" />
               <div className="space-y-2">
                 <div className="h-4 bg-gray-200 rounded w-3/4" />
@@ -84,10 +90,11 @@ export const AdminGiftList =  ({ onEdit, onDelete }: AdminGiftListProps) => {
             >
               <div className="aspect-square relative">
                 {gift.imageUrl ? (
-                  <img
+                  <Image
                     src={gift.imageUrl}
                     alt={gift.title}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gray-50">
